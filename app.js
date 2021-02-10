@@ -25,7 +25,7 @@ const server = http.createServer((req, res) => {
                 }
                 case '/users': {
                     res.statusCode = 200;
-                    res.setHeader('Content-Type', 'text/plain');
+                    res.setHeader('Content-Type', 'application/json');
                     res.end(JSON.stringify(users));
                     break;
                 }
@@ -41,9 +41,17 @@ const server = http.createServer((req, res) => {
         case 'POST': {
             switch (req.url) {
                 case '/register': {
+                    console.log('chunk.toString()')
+                    
+                    
+                    req.on('data', chunk => {
+                        //console.log('dasdasdas')
+                        //console.log(JSON.parse(chunk))
+                    })
+                    console.log('chunk.toString()')
                     res.statusCode = 200;
-                    res.setHeader('Content-Type', 'text/plain');
-                    res.end('Index\n');
+                    res.setHeader('Content-Type', 'application/json');
+                    res.end('ready');
                     break;
                 }
                 case '/login': {
