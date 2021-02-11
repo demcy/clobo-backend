@@ -56,14 +56,12 @@ const server = http.createServer((req, res) => {
                 }
                 case '/login': {
                     var state = 'false'
-                    
+
                     req.on('data', chunk => {
-                        console.log(JSON.stringify(users))
-                        console.log(JSON.stringify(users.filter(user => user.email === JSON.parse(chunk).email)))
                         bcrypt.compare(JSON.parse(chunk).password,
-                            users.filter(user => user.email === JSON.parse(chunk).email).password, 
+                            users.find(user => user.email === JSON.parse(chunk).email).password,
                             function (err, result) {
-                                if ( result === true){
+                                if (result === true) {
                                     console.log('ura')
                                     state = 'success'
                                 }
@@ -123,20 +121,20 @@ const server = http.createServer((req, res) => {
 
 });
 
-function authencticateToken(req, res) {
-    console.log('hi')
-    const authHeader = req.headers['authorization']
-    const token = authHeader && authHeader.split(' ')[1]
-    if (token == null) return res.setHeader(401)
+// function authencticateToken(req, res) {
+//     console.log('hi')
+//     const authHeader = req.headers['authorization']
+//     const token = authHeader && authHeader.split(' ')[1]
+//     if (token == null) return res.setHeader(401)
 
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
-        if (err) return res.setHeader(403)
-        //console.log(req.user)
-        req.user = user
-        //console.log(req.user)
-        return true
-    })
-};
+//     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+//         if (err) return res.setHeader(403)
+//         //console.log(req.user)
+//         req.user = user
+//         //console.log(req.user)
+//         return true
+//     })
+// };
 
 server.listen(port, hostname, () => {
     console.log(`Server running at http://${hostname}:${port}/`);
