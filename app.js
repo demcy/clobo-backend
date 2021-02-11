@@ -8,9 +8,10 @@ const port = 4000;
 const bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
 
-const users = [{email: 'aaaa',password: 'aaaa'}]
+const users = []
 
 const server = http.createServer((req, res) => {
+    // res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
@@ -41,23 +42,38 @@ const server = http.createServer((req, res) => {
         case 'POST': {
             switch (req.url) {
                 case '/register': {
-                    console.log('chunk.toString()')
-                    
-                    
                     req.on('data', chunk => {
-                        //console.log('dasdasdas')
-                        //console.log(JSON.parse(chunk))
+                        bcrypt.hash(JSON.parse(chunk).password, 10, function (err, hash) {
+                            users.push({ email: JSON.parse(chunk).email, password: hash })
+                        });
+                    });
+                    req.on('end', () => {
+                        res.statusCode = 201;
+                        res.setHeader('Content-Type', 'application/json');
+                        res.end('success');
                     })
-                    console.log('chunk.toString()')
-                    res.statusCode = 200;
-                    res.setHeader('Content-Type', 'application/json');
-                    res.end('ready');
                     break;
                 }
                 case '/login': {
-                    res.statusCode = 200;
-                    res.setHeader('Content-Type', 'text/plain');
-                    res.end('Index\n');
+                    var state = 'false'
+                    
+                    req.on('data', chunk => {
+                        console.log(JSON.stringify(users))
+                        console.log(JSON.stringify(users.filter(user => user.email === JSON.parse(chunk).email)))
+                        bcrypt.compare(JSON.parse(chunk).password,
+                            users.filter(user => user.email === JSON.parse(chunk).email).password, 
+                            function (err, result) {
+                                if ( result === true){
+                                    console.log('ura')
+                                    state = 'success'
+                                }
+                            });
+                    });
+                    req.on('end', () => {
+                        res.statusCode = 200;
+                        res.setHeader('Content-Type', 'application/json');
+                        res.end(state);
+                    })
                     break;
                 }
                 default: {
