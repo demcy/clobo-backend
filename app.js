@@ -43,9 +43,9 @@ const server = http.createServer((req, res) => {
             switch (req.url) {
                 case '/register': {
                     req.on('data', chunk => {
-                        bcrypt.hash(JSON.parse(chunk).password, 10, function (err, hash) {
-                            users.push({ email: JSON.parse(chunk).email, password: hash })
-                        });
+                        const hash = bcrypt.hashSync(JSON.parse(chunk).password, 10);
+                        users.push({ email: JSON.parse(chunk).email, password: hash })
+
                     });
                     req.on('end', () => {
                         res.statusCode = 201;
@@ -55,22 +55,20 @@ const server = http.createServer((req, res) => {
                     break;
                 }
                 case '/login': {
-                    var state = 'false'
-
+                    var token = ''
                     req.on('data', chunk => {
-                        bcrypt.compare(JSON.parse(chunk).password,
-                            users.find(user => user.email === JSON.parse(chunk).email).password,
-                            function (err, result) {
-                                if (result === true) {
-                                    console.log('ura')
-                                    state = 'success'
-                                }
-                            });
+                        console.log('accessToken')
+                        const result = bcrypt.compareSync(JSON.parse(chunk).password,
+                            users.find(user => user.email === JSON.parse(chunk).email).password);
+                        if (result) {
+                            token = jwt.sign(users.find(user => user.email === JSON.parse(chunk).email), process.env.TOKEN_SECRET)
+
+                        }
                     });
                     req.on('end', () => {
                         res.statusCode = 200;
-                        res.setHeader('Content-Type', 'application/json');
-                        res.end(state);
+                        res.setHeader('Content-Type', 'text/plain');
+                        res.end(token);
                     })
                     break;
                 }
