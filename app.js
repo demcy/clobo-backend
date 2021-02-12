@@ -15,8 +15,10 @@ const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
+    console.log(req.url + req.method)
     switch (req.method) {
         case 'GET': {
+            console.log(req.url)
             switch (req.url) {
                 case '/': {
                     res.statusCode = 200;
@@ -25,6 +27,9 @@ const server = http.createServer((req, res) => {
                     break;
                 }
                 case '/users': {
+                    console.log('here')
+                    console.log(req.headers)
+                    console.log(req.headers.cookie)
                     res.statusCode = 200;
                     res.setHeader('Content-Type', 'application/json');
                     res.end(JSON.stringify(users));
@@ -57,12 +62,10 @@ const server = http.createServer((req, res) => {
                 case '/login': {
                     var token = ''
                     req.on('data', chunk => {
-                        console.log('accessToken')
                         const result = bcrypt.compareSync(JSON.parse(chunk).password,
                             users.find(user => user.email === JSON.parse(chunk).email).password);
                         if (result) {
                             token = jwt.sign(users.find(user => user.email === JSON.parse(chunk).email), process.env.TOKEN_SECRET)
-
                         }
                     });
                     req.on('end', () => {
@@ -82,6 +85,9 @@ const server = http.createServer((req, res) => {
             break;
         }
         default: {
+            res.statusCode = 200;
+                        res.setHeader('Content-Type', 'text/plain');
+                        res.end(token);
             break;
         }
     }
