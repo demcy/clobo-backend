@@ -18,7 +18,6 @@ const server = http.createServer((req, res) => {
     console.log(req.url + req.method)
     switch (req.method) {
         case 'GET': {
-            console.log(req.url)
             switch (req.url) {
                 case '/': {
                     res.statusCode = 200;
@@ -27,9 +26,12 @@ const server = http.createServer((req, res) => {
                     break;
                 }
                 case '/users': {
-                    console.log('here')
-                    console.log(req.headers)
-                    console.log(req.headers.cookie)
+                    console.log(req.headers.cookie.split('=')[1])
+                    const tokenUser = jwt.verify(req.headers.cookie.split('=')[1], process.env.TOKEN_SECRET)
+                    
+                    const v = users.find(user => user.email === tokenUser.email && user.password === tokenUser.password)
+                    console.log(v)
+                   
                     res.statusCode = 200;
                     res.setHeader('Content-Type', 'application/json');
                     res.end(JSON.stringify(users));
