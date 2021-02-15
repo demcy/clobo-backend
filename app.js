@@ -11,8 +11,10 @@ var jwt = require('jsonwebtoken');
 const users = []
 
 const server = http.createServer((req, res) => {
-    // res.setHeader('Access-Control-Allow-Credentials', true);
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    
+    //res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
     res.setHeader('Access-Control-Allow-Methods', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
     console.log(req.url + req.method)
@@ -26,15 +28,21 @@ const server = http.createServer((req, res) => {
                     break;
                 }
                 case '/users': {
+                    if(req.headers.cookie == null){
+                        res.statusCode = 401
+                        res.setHeader('Content-Type', 'text/plain');
+                        res.end()
+                        break
+                    }
+                    console.log(req.headers.cookie)
                     console.log(req.headers.cookie.split('=')[1])
                     const tokenUser = jwt.verify(req.headers.cookie.split('=')[1], process.env.TOKEN_SECRET)
-                    
                     const v = users.find(user => user.email === tokenUser.email && user.password === tokenUser.password)
                     console.log(v)
-                   
                     res.statusCode = 200;
                     res.setHeader('Content-Type', 'application/json');
                     res.end(JSON.stringify(users));
+                    res.end()
                     break;
                 }
                 default: {
@@ -73,6 +81,7 @@ const server = http.createServer((req, res) => {
                     req.on('end', () => {
                         res.statusCode = 200;
                         res.setHeader('Content-Type', 'text/plain');
+                        res.setHeader("SET-COOKIE", "ACCESS_TOKEN=" + token + "; SameSite = Strict; Secure; HttpOnly")
                         res.end(token);
                     })
                     break;
