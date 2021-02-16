@@ -58,9 +58,9 @@ const server = http.createServer((req, res) => {
             switch (req.url) {
                 case '/register': {
                     req.on('data', chunk => {
-                        const hash = bcrypt.hashSync(JSON.parse(chunk).password, 10);
-                        users.push({ email: JSON.parse(chunk).email, password: hash })
-
+                        users.push({ 
+                            email: JSON.parse(chunk).email, 
+                            password: bcrypt.hashSync(JSON.parse(chunk).password, 10) })
                     });
                     req.on('end', () => {
                         res.statusCode = 201;
