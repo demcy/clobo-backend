@@ -7,12 +7,23 @@ const port = 4000;
 
 const bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
+const sgMail = require('@sendgrid/mail')
+sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
 const users = []
 
+const msg = {
+    to: 'demcy@mail.com', // Change to your recipient
+    from: 'demcy.meizu@gmail.com', // Change to your verified sender
+    subject: 'Sending with SendGrid is Fun',
+    text: 'and easy to do anywhere, even with Node.js',
+    html: '<strong>and easy to do anywhere, even with Node.js</strong>',
+}
+
+
 const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Credentials', true);
-    
+
     //res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
     res.setHeader('Access-Control-Allow-Methods', '*');
@@ -28,7 +39,7 @@ const server = http.createServer((req, res) => {
                     break;
                 }
                 case '/users': {
-                    if(req.headers.cookie == null){
+                    if (req.headers.cookie == null) {
                         res.statusCode = 401
                         res.setHeader('Content-Type', 'text/plain');
                         res.end()
@@ -58,11 +69,20 @@ const server = http.createServer((req, res) => {
             switch (req.url) {
                 case '/register': {
                     req.on('data', chunk => {
-                        users.push({ 
-                            email: JSON.parse(chunk).email, 
-                            password: bcrypt.hashSync(JSON.parse(chunk).password, 10) })
+                        users.push({
+                            email: JSON.parse(chunk).email,
+                            password: bcrypt.hashSync(JSON.parse(chunk).password, 10)
+                        })
                     });
                     req.on('end', () => {
+                        sgMail
+                            .send(msg)
+                            .then(() => {
+                                console.log('Email sent')
+                            })
+                            .catch((error) => {
+                                console.error(error)
+                            })
                         res.statusCode = 201;
                         res.setHeader('Content-Type', 'application/json');
                         res.end('success');
@@ -97,8 +117,8 @@ const server = http.createServer((req, res) => {
         }
         default: {
             res.statusCode = 200;
-                        res.setHeader('Content-Type', 'text/plain');
-                        res.end(token);
+            res.setHeader('Content-Type', 'text/plain');
+            res.end(token);
             break;
         }
     }
