@@ -27,7 +27,8 @@ const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Credentials', true);
 
     //res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Origin', 'https://localhost:3000');
+    //res.setHeader('Access-Control-Allow-Origin', 'https://localhost:3000');
+    res.setHeader('Access-Control-Allow-Origin', 'https://clobo.ga');
     res.setHeader('Access-Control-Allow-Methods', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
     console.log(req.url + req.method)
