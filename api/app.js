@@ -38,6 +38,12 @@ const server = http.createServer((req, res) => {
                     res.end('Index\n');
                     break;
                 }
+                case '/vercel': {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'text/plain');
+                    res.end('Vercel\n');
+                    break;
+                }
                 case '/users': {
                     if (req.headers.cookie == null) {
                         res.statusCode = 401
