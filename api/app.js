@@ -44,6 +44,18 @@ const server = http.createServer((req, res) => {
                     res.end('Vercel\n');
                     break;
                 }
+                case '/app/vercel': {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'text/plain');
+                    res.end('Vercel APP\n');
+                    break;
+                }
+                case '/api/app/vercel': {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'text/plain');
+                    res.end('Vercel API APP\n');
+                    break;
+                }
                 case '/users': {
                     if (req.headers.cookie == null) {
                         res.statusCode = 401
