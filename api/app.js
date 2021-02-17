@@ -3,7 +3,7 @@ require('dotenv').config()
 const http = require('http');
 
 const hostname = 'localhost';
-const port = 3000;
+const port = 4000;
 
 const bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
@@ -21,7 +21,7 @@ const msg = {
 }
 
 
-module.exports = http.createServer((req, res) => {
+const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Credentials', true);
 
     //res.setHeader('Access-Control-Allow-Origin', '*');
@@ -154,9 +154,7 @@ module.exports = http.createServer((req, res) => {
     // }
 
 
-}).listen(port, hostname, () => {
-         console.log(`Server running at http://${hostname}:${port}/`);
-     });
+});
 
 // function authencticateToken(req, res) {
 //     console.log('hi')
@@ -173,8 +171,8 @@ module.exports = http.createServer((req, res) => {
 //     })
 // };
 
-// server.listen(port, hostname, () => {
-//     console.log(`Server running at http://${hostname}:${port}/`);
-// });
+server.listen(port, hostname, () => {
+    console.log(`Server running at http://${hostname}:${port}/`);
+});
 
-//module.exports = http
+module.exports = http
