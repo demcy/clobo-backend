@@ -1,13 +1,15 @@
 require('dotenv').config()
 
 const http = require('http');
+//var url = require('url');
 
 const hostname = 'localhost';
 const port = 4000;
 
 const bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
-const sgMail = require('@sendgrid/mail')
+const sgMail = require('@sendgrid/mail');
+const { URLSearchParams } = require('url');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
 const users = []
@@ -89,8 +91,12 @@ const server = http.createServer((req, res) => {
                     req.on('data', chunk => {
                         users.push({
                             email: JSON.parse(chunk).email,
-                            password: bcrypt.hashSync(JSON.parse(chunk).password, 10)
+                            password: bcrypt.hashSync(JSON.parse(chunk).password, 10),
+                            isConfirmed: false
                         })
+                        msg.html =  `<a href="http://localhost:3000/Confirm?
+                        email=${JSON.parse(chunk).email}&
+                        token=${bcrypt.hashSync(JSON.parse(chunk).password, 10)}">Link</a>`
                     });
                     req.on('end', () => {
                         sgMail
@@ -114,6 +120,7 @@ const server = http.createServer((req, res) => {
                             users.find(user => user.email === JSON.parse(chunk).email).password);
                         if (result) {
                             token = jwt.sign(users.find(user => user.email === JSON.parse(chunk).email), process.env.TOKEN_SECRET)
+                            console.log(result)
                         }
                     });
                     req.on('end', () => {
@@ -125,15 +132,17 @@ const server = http.createServer((req, res) => {
                     break;
                 }
                 case '/confirm': {
-                    var token = ''
+                    //var token = ''
+                   
                     req.on('data', chunk => {
                         console.log(JSON.parse(chunk))
-                        console.log(req.url)
-                        // const result = bcrypt.compareSync(JSON.parse(chunk).password,
-                        //     users.find(user => user.email === JSON.parse(chunk).email).password);
-                        // if (result) {
-                        //     token = jwt.sign(users.find(user => user.email === JSON.parse(chunk).email), process.env.TOKEN_SECRET)
-                        // }
+                        const result = bcrypt.compareSync(JSON.parse(chunk).token,
+                            users.find(user => user.email === JSON.parse(chunk).email).password);
+                        if (result) {
+                            const user = users.find(user => user.email === JSON.parse(chunk).email)
+                            user.isConfirmed = true
+                            //token = jwt.sign(users.find(user => user.email === JSON.parse(chunk).email), process.env.TOKEN_SECRET)
+                        }
                     });
                     req.on('end', () => {
                         // res.statusCode = 200;
