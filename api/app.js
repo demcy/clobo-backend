@@ -15,8 +15,8 @@ const users = []
 const msg = {
     to: 'demcy@mail.com', // Change to your recipient
     from: 'demcy.meizu@gmail.com', // Change to your verified sender
-    subject: 'Sending with SendGrid is Fun',
-    text: 'and easy to do anywhere, even with Node.js',
+    subject: 'Clobo Register confirmation',
+    text: 'Confirm your email',
     html: '<strong>and easy to do anywhere, even with Node.js</strong>',
 }
 
@@ -25,7 +25,7 @@ const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Credentials', true);
 
     //res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+    res.setHeader('Access-Control-Allow-Origin', 'https://localhost:3000');
     res.setHeader('Access-Control-Allow-Methods', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
     console.log(req.url + req.method)
@@ -121,6 +121,25 @@ const server = http.createServer((req, res) => {
                         res.setHeader('Content-Type', 'text/plain');
                         res.setHeader("SET-COOKIE", "ACCESS_TOKEN=" + token + "; SameSite = Strict; Secure; HttpOnly")
                         res.end(token);
+                    })
+                    break;
+                }
+                case '/confirm': {
+                    var token = ''
+                    req.on('data', chunk => {
+                        console.log(JSON.parse(chunk))
+                        console.log(req.url)
+                        // const result = bcrypt.compareSync(JSON.parse(chunk).password,
+                        //     users.find(user => user.email === JSON.parse(chunk).email).password);
+                        // if (result) {
+                        //     token = jwt.sign(users.find(user => user.email === JSON.parse(chunk).email), process.env.TOKEN_SECRET)
+                        // }
+                    });
+                    req.on('end', () => {
+                        // res.statusCode = 200;
+                        // res.setHeader('Content-Type', 'text/plain');
+                        // res.setHeader("SET-COOKIE", "ACCESS_TOKEN=" + token + "; SameSite = Strict; Secure; HttpOnly")
+                        // res.end(token);
                     })
                     break;
                 }
