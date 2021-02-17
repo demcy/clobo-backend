@@ -21,7 +21,7 @@ const msg = {
 }
 
 
-const server = http.createServer((req, res) => {
+module.exports = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Credentials', true);
 
     //res.setHeader('Access-Control-Allow-Origin', '*');
@@ -154,7 +154,9 @@ const server = http.createServer((req, res) => {
     // }
 
 
-});
+}).listen(port, hostname, () => {
+         console.log(`Server running at http://${hostname}:${port}/`);
+     });
 
 // function authencticateToken(req, res) {
 //     console.log('hi')
@@ -171,8 +173,8 @@ const server = http.createServer((req, res) => {
 //     })
 // };
 
-server.listen(port, hostname, () => {
-    console.log(`Server running at http://${hostname}:${port}/`);
-});
+// server.listen(port, hostname, () => {
+//     console.log(`Server running at http://${hostname}:${port}/`);
+// });
 
-module.exports = http
+//module.exports = http
