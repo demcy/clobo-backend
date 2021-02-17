@@ -3,7 +3,7 @@ require('dotenv').config()
 const http = require('http');
 
 const hostname = 'localhost';
-const port = 4000;
+const port = 3000;
 
 const bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
