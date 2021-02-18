@@ -34,6 +34,8 @@ const server = http.createServer((req, res) => {
     res.setHeader('Content-Security-Policy','default-src https://localhost:3000');
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Permissions-Policy', 'geolocation=(self "https://localhost:3000"), microphone=()');
     console.log(req.url + req.method)
     switch (req.method) {
         case 'GET': {
