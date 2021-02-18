@@ -32,6 +32,7 @@ const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Methods', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Content-Security-Policy','default-src https://localhost:3000');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     console.log(req.url + req.method)
     switch (req.method) {
         case 'GET': {
