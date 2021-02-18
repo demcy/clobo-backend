@@ -27,10 +27,11 @@ const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Credentials', true);
 
     //res.setHeader('Access-Control-Allow-Origin', '*');
-    //res.setHeader('Access-Control-Allow-Origin', 'https://localhost:3000');
-    res.setHeader('Access-Control-Allow-Origin', 'https://clobo.ga');
+    res.setHeader('Access-Control-Allow-Origin', 'https://localhost:3000');
+    //res.setHeader('Access-Control-Allow-Origin', 'https://clobo.ga');
     res.setHeader('Access-Control-Allow-Methods', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
+    res.setHeader('Content-Security-Policy','default-src https://localhost:3000');
     console.log(req.url + req.method)
     switch (req.method) {
         case 'GET': {
@@ -68,7 +69,7 @@ const server = http.createServer((req, res) => {
                     }
                     console.log(req.headers.cookie)
                     console.log(req.headers.cookie.split('=')[1])
-                    const tokenUser = jwt.verify(req.headers.cookie.split('=')[1], process.env.TOKEN_SECRET)
+                    const tokenUser = jwt.verify(req.headers.cookie.split('=')[1], process.env.ACCESS_TOKEN)
                     const v = users.find(user => user.email === tokenUser.email && user.password === tokenUser.password)
                     console.log(v)
                     res.statusCode = 200;
@@ -90,14 +91,15 @@ const server = http.createServer((req, res) => {
             switch (req.url) {
                 case '/register': {
                     req.on('data', chunk => {
-                        users.push({
+                        const user = {
                             email: JSON.parse(chunk).email,
                             password: bcrypt.hashSync(JSON.parse(chunk).password, 10),
                             isConfirmed: false
-                        })
-                        msg.html =  `<a href="http://localhost:3000/Confirm?
-                        email=${JSON.parse(chunk).email}&
-                        token=${bcrypt.hashSync(JSON.parse(chunk).password, 10)}">Link</a>`
+                        }
+                        users.push(user)
+                        const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: 1 })
+                        msg.html = `<a href="https://localhost:3000/Confirm?
+                        token=${token}">Link</a>`
                     });
                     req.on('end', () => {
                         sgMail
@@ -120,7 +122,7 @@ const server = http.createServer((req, res) => {
                         const result = bcrypt.compareSync(JSON.parse(chunk).password,
                             users.find(user => user.email === JSON.parse(chunk).email).password);
                         if (result) {
-                            token = jwt.sign(users.find(user => user.email === JSON.parse(chunk).email), process.env.TOKEN_SECRET)
+                            token = jwt.sign(users.find(user => user.email === JSON.parse(chunk).email), process.env.ACCESS_TOKEN)
                             console.log(result)
                         }
                     });
@@ -133,24 +135,28 @@ const server = http.createServer((req, res) => {
                     break;
                 }
                 case '/confirm': {
-                    //var token = ''
-                   
                     req.on('data', chunk => {
-                        console.log(JSON.parse(chunk))
-                        const result = bcrypt.compareSync(JSON.parse(chunk).token,
-                            users.find(user => user.email === JSON.parse(chunk).email).password);
-                        if (result) {
-                            const user = users.find(user => user.email === JSON.parse(chunk).email)
-                            user.isConfirmed = true
-                            //token = jwt.sign(users.find(user => user.email === JSON.parse(chunk).email), process.env.TOKEN_SECRET)
+                        try {
+                            const confirmUser = jwt.verify(JSON.parse(chunk).token, process.env.ACCESS_TOKEN)
+                            const user = users.find(user => user.email === confirmUser.email && user.password === confirmUser.password)
+                            if (user != null) {
+                                user.isConfirmed = true
+                            }
+                            res.statusCode = 200;
+                            res.end()
+                        } catch (err) {
+                            res.statusCode = 403;
+                            if(err.name === 'TokenExpiredError'){
+                                var decoded = jwt.decode(JSON.parse(chunk).token);
+                                const user = users.find(user => user.email === decoded.email && user.password === decoded.password)
+                                if (user != null) {
+                                    users.pop(user)
+                                }
+                                res.statusCode = 401;
+                            }
+                            res.end()
                         }
                     });
-                    req.on('end', () => {
-                        // res.statusCode = 200;
-                        // res.setHeader('Content-Type', 'text/plain');
-                        // res.setHeader("SET-COOKIE", "ACCESS_TOKEN=" + token + "; SameSite = Strict; Secure; HttpOnly")
-                        // res.end(token);
-                    })
                     break;
                 }
                 default: {
