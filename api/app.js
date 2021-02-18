@@ -1,35 +1,35 @@
 require('dotenv').config()
-//const https = require('https');
-//const fs = require('fs');
-// const options = {
-//     key: fs.readFileSync('clobo-key.pem'),
-//     cert: fs.readFileSync('clobo-cert.pem')
-// };
-//const server = https.createServer(options, (req, res) => {
-const http = require('http');
-//var url = require('url');
 
+//const http = require('http');
+const https = require('https');
+const fs = require('fs');
+
+const { URLSearchParams } = require('url');
 const hostname = 'localhost';
 const port = 4000;
+const options = {
+    key: fs.readFileSync('clobo-key.pem'),
+    cert: fs.readFileSync('clobo-cert.pem')
+};
 
 const bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
 const sgMail = require('@sendgrid/mail');
-const { URLSearchParams } = require('url');
+
+
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
 const users = []
 
 const msg = {
-    to: 'demcy@mail.com', // Change to your recipient
+    to: 'demcy.meizu@gmail.com', // Change to your recipient
     from: 'demcy.meizu@gmail.com', // Change to your verified sender
     subject: 'Clobo Register confirmation',
-    text: 'Confirm your email',
     html: '<strong>and easy to do anywhere, even with Node.js</strong>',
 }
 
-
-const server = http.createServer((req, res) => {
+const server = https.createServer(options, (req, res) => {
+    //const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Credentials', true);
 
     //res.setHeader('Access-Control-Allow-Origin', '*');
@@ -37,7 +37,7 @@ const server = http.createServer((req, res) => {
     //res.setHeader('Access-Control-Allow-Origin', 'https://clobo.ga');
     res.setHeader('Access-Control-Allow-Methods', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
-    res.setHeader('Content-Security-Policy','default-src https://localhost:3000');
+    res.setHeader('Content-Security-Policy', 'default-src https://localhost:3000');
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'no-referrer');
@@ -107,9 +107,14 @@ const server = http.createServer((req, res) => {
                             isConfirmed: false
                         }
                         users.push(user)
-                        const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: 1 })
-                        msg.html = `<a href="https://localhost:3000/Confirm?
-                        token=${token}">Link</a>`
+                        const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: 60 * 60 })
+                        // msg.html = `<a href="https://localhost:3000/Confirm?
+                        // token=${token}">Link</a>`
+                        msg.html = `<div style="display: inline-block">
+                        <img alt="logo" src="https://clobo.ga/logo.jpg"></img>
+                        <a style="background-color: #4c2b00; color: white; padding: 15px 25px; text-align: center; text-decoration: none; display: block; border-radius: 5px" 
+                        href="https://localhost:3000/Confirm?
+                        token=${token}">Confirm your email</a></div>`
                     });
                     req.on('end', () => {
                         sgMail
@@ -156,12 +161,23 @@ const server = http.createServer((req, res) => {
                             res.end()
                         } catch (err) {
                             res.statusCode = 403;
-                            if(err.name === 'TokenExpiredError'){
+                            if (err.name === 'TokenExpiredError') {
                                 var decoded = jwt.decode(JSON.parse(chunk).token);
                                 const user = users.find(user => user.email === decoded.email && user.password === decoded.password)
-                                if (user != null) {
-                                    users.pop(user)
-                                }
+                                const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: 60 * 60 })
+                                msg.html = `<div style="display: inline-block">
+                                <img alt="logo" src="https://clobo.ga/logo.jpg"></img>
+                                <a style="background-color: #4c2b00; color: white; padding: 15px 25px; text-align: center; text-decoration: none; display: block; border-radius: 5px" 
+                                href="https://localhost:3000/Confirm?
+                                token=${token}">Confirm your email</a></div>`
+                                sgMail
+                                    .send(msg)
+                                    .then(() => {
+                                        console.log('Email sent')
+                                    })
+                                    .catch((error) => {
+                                        console.error(error)
+                                    })
                                 res.statusCode = 401;
                             }
                             res.end()
@@ -235,7 +251,7 @@ const server = http.createServer((req, res) => {
 // };
 
 server.listen(port, hostname, () => {
-    console.log(`Server running at http://${hostname}:${port}/`);
+    console.log(`Server running at https://${hostname}:${port}/`);
 });
 
-module.exports = http
+module.exports = https
