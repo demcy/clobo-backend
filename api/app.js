@@ -101,34 +101,25 @@ const server = https.createServer(options, (req, res) => {
             switch (req.url) {
                 case '/register': {
                     req.on('data', chunk => {
-                        const user = {
-                            email: JSON.parse(chunk).email,
-                            password: bcrypt.hashSync(JSON.parse(chunk).password, 10),
-                            isConfirmed: false
+                        const existUser = users.find(user => user.email === JSON.parse(chunk).email)
+                        if (existUser == null) {
+                            const user = {
+                                email: JSON.parse(chunk).email,
+                                password: bcrypt.hashSync(JSON.parse(chunk).password, 10),
+                                isConfirmed: false
+                            }
+                            users.push(user)
+                            const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: 60 * 60 })
+                            confirmMessage(token)
+                            res.statusCode = 201;
+                            res.setHeader('Content-Type', 'application/json');
+                            res.end('User created a new account with password');
+                        } else {
+                            res.statusCode = 409;
+                            res.setHeader('Content-Type', 'application/json');
+                            res.end('User email is already in use');
                         }
-                        users.push(user)
-                        const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: 60 * 60 })
-                        // msg.html = `<a href="https://localhost:3000/Confirm?
-                        // token=${token}">Link</a>`
-                        msg.html = `<div style="display: inline-block">
-                        <img alt="logo" src="https://clobo.ga/logo.jpg"></img>
-                        <a style="background-color: #4c2b00; color: white; padding: 15px 25px; text-align: center; text-decoration: none; display: block; border-radius: 5px" 
-                        href="https://localhost:3000/Confirm?
-                        token=${token}">Confirm your email</a></div>`
                     });
-                    req.on('end', () => {
-                        sgMail
-                            .send(msg)
-                            .then(() => {
-                                console.log('Email sent')
-                            })
-                            .catch((error) => {
-                                console.error(error)
-                            })
-                        res.statusCode = 201;
-                        res.setHeader('Content-Type', 'application/json');
-                        res.end('success');
-                    })
                     break;
                 }
                 case '/login': {
@@ -253,5 +244,21 @@ const server = https.createServer(options, (req, res) => {
 server.listen(port, hostname, () => {
     console.log(`Server running at https://${hostname}:${port}/`);
 });
+
+function confirmMessage(token) {
+    msg.html = `<div style="display: inline-block">
+                <img alt="logo" src="https://clobo.ga/logo.jpg"></img>
+                <a style="background-color: #4c2b00; color: white; padding: 15px 25px; text-align: center; text-decoration: none; display: block; border-radius: 5px" 
+                href="https://localhost:3000/Confirm?
+                token=${token}">Confirm your email</a></div>`
+    sgMail
+        .send(msg)
+        .then(() => {
+            console.log('Email sent')
+        })
+        .catch((error) => {
+            console.error(error)
+        })
+}
 
 module.exports = https
