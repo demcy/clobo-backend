@@ -122,24 +122,6 @@ const server = https.createServer(options, (req, res) => {
                     });
                     break;
                 }
-                case '/login': {
-                    var token = ''
-                    req.on('data', chunk => {
-                        const result = bcrypt.compareSync(JSON.parse(chunk).password,
-                            users.find(user => user.email === JSON.parse(chunk).email).password);
-                        if (result) {
-                            token = jwt.sign(users.find(user => user.email === JSON.parse(chunk).email), process.env.ACCESS_TOKEN)
-                            console.log(result)
-                        }
-                    });
-                    req.on('end', () => {
-                        res.statusCode = 200;
-                        res.setHeader('Content-Type', 'text/plain');
-                        res.setHeader("SET-COOKIE", "ACCESS_TOKEN=" + token + "; SameSite = Strict; Secure; HttpOnly")
-                        res.end(token);
-                    })
-                    break;
-                }
                 case '/confirm': {
                     req.on('data', chunk => {
                         try {
@@ -147,35 +129,67 @@ const server = https.createServer(options, (req, res) => {
                             const user = users.find(user => user.email === confirmUser.email && user.password === confirmUser.password)
                             if (user != null) {
                                 user.isConfirmed = true
+                                res.statusCode = 200;
+                                res.end('Thank you for confirming your email')
+                            } else {
+                                res.statusCode = 404;
+                                res.end('User not found')
                             }
-                            res.statusCode = 200;
-                            res.end()
                         } catch (err) {
                             res.statusCode = 403;
                             if (err.name === 'TokenExpiredError') {
                                 var decoded = jwt.decode(JSON.parse(chunk).token);
                                 const user = users.find(user => user.email === decoded.email && user.password === decoded.password)
-                                const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: 60 * 60 })
-                                msg.html = `<div style="display: inline-block">
-                                <img alt="logo" src="https://clobo.ga/logo.jpg"></img>
-                                <a style="background-color: #4c2b00; color: white; padding: 15px 25px; text-align: center; text-decoration: none; display: block; border-radius: 5px" 
-                                href="https://localhost:3000/Confirm?
-                                token=${token}">Confirm your email</a></div>`
-                                sgMail
-                                    .send(msg)
-                                    .then(() => {
-                                        console.log('Email sent')
-                                    })
-                                    .catch((error) => {
-                                        console.error(error)
-                                    })
-                                res.statusCode = 401;
+                                if (user != null) {
+                                    if (user.isConfirmed) {
+                                        res.end('User email is already verified')
+                                    } else {
+                                        res.statusCode = 401;
+                                        const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: 60 * 60 })
+                                        confirmMessage(token)
+                                        res.write('Email confirmation link is expired. ')
+                                        res.end('Please check your email to confirm your account')
+                                    }
+                                }
+                                else {
+                                    res.statusCode = 404;
+                                    res.end('User not found')
+                                }
+                            } else {
+                                res.end('Error confirming your email')
                             }
-                            res.end()
                         }
                     });
                     break;
                 }
+                case '/login': {
+                    var token = ''
+                    req.on('data', chunk => {
+                        const user = users.find(user => user.email === JSON.parse(chunk).email)
+                        if (user != null) {
+                            if (user.isConfirmed) {
+                                const result = bcrypt.compareSync(JSON.parse(chunk).password, user.password);
+                                if (result) {
+                                    token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: 60 * 60 })
+                                    res.statusCode = 200;
+                                    res.setHeader("SET-COOKIE", "ACCESS_TOKEN=" + token + "; SameSite = Strict; Secure; HttpOnly")
+                                    res.end();
+                                } else {
+                                    res.statusCode = 403;
+                                    res.end('Your password is incorrect');
+                                }
+                            } else {
+                                res.statusCode = 403;
+                                res.end('Please check your email to confirm your account')
+                            }
+                        } else {
+                            res.statusCode = 404;
+                            res.end('User not found');
+                        }
+                    });
+                    break;
+                }
+
                 default: {
                     res.statusCode = 200;
                     res.setHeader('Content-Type', 'text/plain');
